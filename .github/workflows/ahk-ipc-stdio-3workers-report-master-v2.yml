@@ -1,0 +1,213 @@
+name: AHK IPC stdio 3workers report master v2
+
+on:
+  push:
+    paths:
+      - ".github/workflows/ahk-ipc-stdio-3workers-report-master-v2.yml"
+      - "scripts/tests/stdio/child_echo_multiworker_v1.ahk"
+      - "tools/test_stdio_three_workers_py_v2.py"
+      - "docs/three-workers-v2.md"
+      - "AGENTS.md"
+      - "docs/agent-pitfalls.md"
+  pull_request:
+    paths:
+      - ".github/workflows/ahk-ipc-stdio-3workers-report-master-v2.yml"
+      - "scripts/tests/stdio/child_echo_multiworker_v1.ahk"
+      - "tools/test_stdio_three_workers_py_v2.py"
+      - "docs/three-workers-v2.md"
+      - "AGENTS.md"
+      - "docs/agent-pitfalls.md"
+  workflow_dispatch:
+    inputs:
+      ahk_version:
+        description: "AutoHotkey v2 release version"
+        required: true
+        default: "2.0.19"
+        type: string
+      timeout_seconds:
+        description: "Harness timeout in seconds"
+        required: true
+        default: "6"
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  stdio-3workers-report-master-v2:
+    runs-on: windows-latest
+    timeout-minutes: 3
+    env:
+      DEFAULT_AHK_VERSION: 2.0.19
+      DEFAULT_TIMEOUT_SECONDS: 6
+      REPORT_DIR: reports/ahk-ipc-stdio-3workers-v2
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Resolve workflow inputs
+        id: resolve
+        shell: pwsh
+        run: |
+          $ahkVersion = "${{ github.event.inputs.ahk_version }}"
+          if ([string]::IsNullOrWhiteSpace($ahkVersion)) { $ahkVersion = "${{ env.DEFAULT_AHK_VERSION }}" }
+
+          $timeoutSeconds = "${{ github.event.inputs.timeout_seconds }}"
+          if ([string]::IsNullOrWhiteSpace($timeoutSeconds)) { $timeoutSeconds = "${{ env.DEFAULT_TIMEOUT_SECONDS }}" }
+
+          "ahk_version=$ahkVersion" >> $env:GITHUB_OUTPUT
+          "timeout_seconds=$timeoutSeconds" >> $env:GITHUB_OUTPUT
+
+      - name: Download AutoHotkey v2
+        shell: pwsh
+        run: |
+          $version = "${{ steps.resolve.outputs.ahk_version }}"
+          $zipUrl = "https://github.com/AutoHotkey/AutoHotkey/releases/download/v$version/AutoHotkey_$version.zip"
+          $zipPath = Join-Path $env:RUNNER_TEMP "AutoHotkey.zip"
+          $extractPath = Join-Path $env:RUNNER_TEMP "AutoHotkey"
+
+          Invoke-WebRequest -Uri $zipUrl -OutFile $zipPath
+          Expand-Archive -LiteralPath $zipPath -DestinationPath $extractPath -Force
+
+          $ahkExe = Join-Path $extractPath "AutoHotkey64.exe"
+          if (-not (Test-Path -LiteralPath $ahkExe)) {
+            throw "AutoHotkey64.exe was not found after extracting $zipUrl"
+          }
+
+          "AHK_EXE=$ahkExe" >> $env:GITHUB_ENV
+
+      - name: Run three-worker harness v2
+        shell: pwsh
+        env:
+          ARTIFACT_DIR: ${{ github.workspace }}\artifacts-ipc-3workers-report-master-v2
+        run: |
+          python "${{ github.workspace }}\tools\test_stdio_three_workers_py_v2.py" --timeout-seconds "${{ steps.resolve.outputs.timeout_seconds }}"
+
+      - name: Show result in log and step summary
+        if: always()
+        shell: pwsh
+        run: |
+          $artifactDir = Join-Path $env:GITHUB_WORKSPACE 'artifacts-ipc-3workers-report-master-v2'
+          foreach ($file in @('summary.json', 'stdout-transcript.txt', 'stderr.txt', 'run-metadata.txt')) {
+            $path = Join-Path $artifactDir $file
+            Write-Host "--- $file ---"
+            if (Test-Path -LiteralPath $path) {
+              Get-Content -LiteralPath $path
+            }
+          }
+
+      - name: Publish latest report and lessons to master
+        if: always()
+        id: publish
+        shell: pwsh
+        run: |
+          $artifactDir = Join-Path $env:GITHUB_WORKSPACE 'artifacts-ipc-3workers-report-master-v2'
+          $summaryPath = Join-Path $artifactDir 'summary.json'
+          $stdoutPath = Join-Path $artifactDir 'stdout-transcript.txt'
+          $stderrPath = Join-Path $artifactDir 'stderr.txt'
+          $metaPath = Join-Path $artifactDir 'run-metadata.txt'
+          $destDir = Join-Path $env:GITHUB_WORKSPACE $env:REPORT_DIR
+          New-Item -ItemType Directory -Path $destDir -Force | Out-Null
+
+          $latestJson = Join-Path $destDir 'latest.json'
+          $latestMd = Join-Path $destDir 'latest.md'
+          $latestTranscript = Join-Path $destDir 'latest-transcript.txt'
+          $latestStderr = Join-Path $destDir 'latest-stderr.txt'
+          $latestMeta = Join-Path $destDir 'latest-metadata.txt'
+          $latestLessons = Join-Path $destDir 'lessons-latest.md'
+
+          if (Test-Path -LiteralPath $summaryPath) { Copy-Item -LiteralPath $summaryPath -Destination $latestJson -Force }
+          if (Test-Path -LiteralPath $stdoutPath) { Copy-Item -LiteralPath $stdoutPath -Destination $latestTranscript -Force }
+          if (Test-Path -LiteralPath $stderrPath) { Copy-Item -LiteralPath $stderrPath -Destination $latestStderr -Force }
+          if (Test-Path -LiteralPath $metaPath) { Copy-Item -LiteralPath $metaPath -Destination $latestMeta -Force }
+
+          [string]$jsonText = if (Test-Path -LiteralPath $summaryPath) { (Get-Content -LiteralPath $summaryPath -Raw) } else { '{"passed":false,"error":"summary.json missing"}' }
+          [string]$stdoutText = if (Test-Path -LiteralPath $stdoutPath) { (Get-Content -LiteralPath $stdoutPath -Raw) } else { '' }
+          [string]$stderrText = if (Test-Path -LiteralPath $stderrPath) { (Get-Content -LiteralPath $stderrPath -Raw) } else { '' }
+          [string]$metaText = if (Test-Path -LiteralPath $metaPath) { (Get-Content -LiteralPath $metaPath -Raw) } else { '' }
+
+          $reportLines = @(
+            '# AHK IPC stdio 3workers latest report',
+            '',
+            "- workflow: ${{ github.workflow }}",
+            "- run id: ${{ github.run_id }}",
+            "- run attempt: ${{ github.run_attempt }}",
+            "- ref: ${{ github.ref }}",
+            "- sha: ${{ github.sha }}",
+            '',
+            '## summary.json',
+            '```json',
+            $jsonText.TrimEnd(),
+            '```',
+            '',
+            '## stdout-transcript.txt',
+            '```text',
+            $stdoutText.TrimEnd(),
+            '```',
+            '',
+            '## stderr.txt',
+            '```text',
+            $stderrText.TrimEnd(),
+            '```',
+            '',
+            '## run-metadata.txt',
+            '```text',
+            $metaText.TrimEnd(),
+            '```'
+          )
+          Set-Content -LiteralPath $latestMd -Value ($reportLines -join "`r`n")
+
+          $lessonsLines = @(
+            '# Latest lessons snapshot for three workers',
+            '',
+            "- latest workflow: ${{ github.workflow }}",
+            "- latest run id: ${{ github.run_id }}",
+            "- latest result path: reports/ahk-ipc-stdio-3workers-v2/latest.md",
+            '',
+            '## Stable pitfalls to remember',
+            '- Multi-worker tests must not reuse a child script that has `#SingleInstance Force`.',
+            '- Keep per-worker transcript lines explicit so it is obvious which child responded.',
+            '- Worker orchestration should fail fast if a single worker misses READY or exits early.',
+            '- Default branch in this repository is `master`.',
+            '',
+            '## Current run summary',
+            '```json',
+            $jsonText.TrimEnd(),
+            '```'
+          )
+          Set-Content -LiteralPath $latestLessons -Value ($lessonsLines -join "`r`n")
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add $env:REPORT_DIR
+          $status = git status --short
+          if ($status) {
+            git commit -m "Update latest AHK IPC 3workers v2 report for run ${{ github.run_id }} attempt ${{ github.run_attempt }}"
+            if ($LASTEXITCODE -ne 0) { throw 'Failed to commit latest three-worker v2 report on master.' }
+            git push origin HEAD:master
+            if ($LASTEXITCODE -ne 0) { throw 'Failed to push latest three-worker v2 report to master.' }
+          }
+
+          $baseUrl = "https://github.com/${{ github.repository }}/blob/master/$env:REPORT_DIR"
+          "report_url=$baseUrl/latest.md" >> $env:GITHUB_OUTPUT
+          "lessons_url=$baseUrl/lessons-latest.md" >> $env:GITHUB_OUTPUT
+
+      - name: Add report links to step summary
+        if: always()
+        shell: pwsh
+        run: |
+          Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value '## Published report'
+          Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- [Latest report](${{ steps.publish.outputs.report_url }})"
+          Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- [Latest lessons](${{ steps.publish.outputs.lessons_url }})"
+          Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value '- Artifact path in repo: `reports/ahk-ipc-stdio-3workers-v2/`'
+
+      - name: Upload IPC artifact
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: ahk-ipc-stdio-3workers-report-master-v2-${{ github.run_id }}-${{ github.run_attempt }}
+          path: artifacts-ipc-3workers-report-master-v2
+          if-no-files-found: warn
+          retention-days: 14
