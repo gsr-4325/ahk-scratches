@@ -1,0 +1,6 @@
+timestamp_utc=2026-03-27T08:05:32Z
+ahk_exe=D:\a\_temp\AutoHotkey\AutoHotkey64.exe
+child_path=D:\a\ahk-scratches\ahk-scratches\scripts\tests\stdio\child_echo_v2.ahk
+timeout_seconds=4.0
+pid=3884
+exit_code=0

@@ -1,0 +1,25 @@
+{
+  "passed": true,
+  "timeout_seconds": 4.0,
+  "child_exit_code": 0,
+  "transcript_line_count": 9,
+  "checks": [
+    "READY",
+    "ping/pong",
+    "echo",
+    "time",
+    "exit"
+  ],
+  "transcript_preview": [
+    "< READY",
+    "> ping",
+    "< pong",
+    "> hello CI",
+    "< echo=hello CI",
+    "> time",
+    "< time=08:05:32",
+    "> exit",
+    "< bye"
+  ],
+  "stderr_preview": []
+}
