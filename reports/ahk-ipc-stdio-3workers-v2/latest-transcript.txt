@@ -1,0 +1,2 @@
+worker-001 < READY
+worker-002 < READY
