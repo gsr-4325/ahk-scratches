@@ -1,0 +1,156 @@
+name: AHK smoke
+
+on:
+  push:
+    paths:
+      - ".github/workflows/**"
+      - "scripts/**"
+      - "docs/**"
+      - "README.md"
+  pull_request:
+    paths:
+      - ".github/workflows/**"
+      - "scripts/**"
+      - "docs/**"
+      - "README.md"
+  workflow_dispatch:
+    inputs:
+      script_path:
+        description: "Repository-relative .ahk script to run"
+        required: true
+        default: "scripts/tests/smoke_stdout.ahk"
+        type: string
+      ahk_version:
+        description: "AutoHotkey v2 release version"
+        required: true
+        default: "2.0.19"
+        type: string
+      timeout_seconds:
+        description: "Process timeout in seconds"
+        required: true
+        default: "60"
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  run-script:
+    runs-on: windows-latest
+    env:
+      DEFAULT_SCRIPT_PATH: scripts/tests/smoke_stdout.ahk
+      DEFAULT_AHK_VERSION: 2.0.19
+      DEFAULT_TIMEOUT_SECONDS: 60
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Resolve workflow inputs
+        id: resolve
+        shell: pwsh
+        run: |
+          $scriptPath = "${{ github.event.inputs.script_path }}"
+          if ([string]::IsNullOrWhiteSpace($scriptPath)) { $scriptPath = "${{ env.DEFAULT_SCRIPT_PATH }}" }
+
+          $ahkVersion = "${{ github.event.inputs.ahk_version }}"
+          if ([string]::IsNullOrWhiteSpace($ahkVersion)) { $ahkVersion = "${{ env.DEFAULT_AHK_VERSION }}" }
+
+          $timeoutSeconds = "${{ github.event.inputs.timeout_seconds }}"
+          if ([string]::IsNullOrWhiteSpace($timeoutSeconds)) { $timeoutSeconds = "${{ env.DEFAULT_TIMEOUT_SECONDS }}" }
+
+          "script_path=$scriptPath" >> $env:GITHUB_OUTPUT
+          "ahk_version=$ahkVersion" >> $env:GITHUB_OUTPUT
+          "timeout_seconds=$timeoutSeconds" >> $env:GITHUB_OUTPUT
+
+      - name: Download AutoHotkey v2
+        shell: pwsh
+        run: |
+          $version = "${{ steps.resolve.outputs.ahk_version }}"
+          $zipUrl = "https://github.com/AutoHotkey/AutoHotkey/releases/download/v$version/AutoHotkey_$version.zip"
+          $zipPath = Join-Path $env:RUNNER_TEMP "AutoHotkey.zip"
+          $extractPath = Join-Path $env:RUNNER_TEMP "AutoHotkey"
+
+          Invoke-WebRequest -Uri $zipUrl -OutFile $zipPath
+          Expand-Archive -LiteralPath $zipPath -DestinationPath $extractPath -Force
+
+          $ahkExe = Join-Path $extractPath "AutoHotkey64.exe"
+          if (-not (Test-Path -LiteralPath $ahkExe)) {
+            throw "AutoHotkey64.exe was not found after extracting $zipUrl"
+          }
+
+          "AHK_EXE=$ahkExe" >> $env:GITHUB_ENV
+
+      - name: Run target script
+        shell: pwsh
+        run: |
+          $scriptPath = "${{ steps.resolve.outputs.script_path }}"
+          $timeoutSeconds = [int]"${{ steps.resolve.outputs.timeout_seconds }}"
+          $fullScriptPath = Join-Path $env:GITHUB_WORKSPACE $scriptPath
+          $artifactDir = Join-Path $env:GITHUB_WORKSPACE "artifacts"
+          $stdoutPath = Join-Path $artifactDir "stdout.txt"
+          $stderrPath = Join-Path $artifactDir "stderr.txt"
+          $metaPath = Join-Path $artifactDir "run-metadata.txt"
+
+          New-Item -ItemType Directory -Path $artifactDir -Force | Out-Null
+
+          if (-not (Test-Path -LiteralPath $fullScriptPath)) {
+            throw "Script not found: $scriptPath"
+          }
+
+          @(
+            "timestamp_utc=$(Get-Date -AsUTC -Format o)",
+            "workflow=${{ github.workflow }}",
+            "run_id=${{ github.run_id }}",
+            "run_attempt=${{ github.run_attempt }}",
+            "github_ref=${{ github.ref }}",
+            "github_sha=${{ github.sha }}",
+            "runner_os=$env:RUNNER_OS",
+            "script_path=$scriptPath",
+            "ahk_version=${{ steps.resolve.outputs.ahk_version }}",
+            "timeout_seconds=$timeoutSeconds"
+          ) | Set-Content -LiteralPath $metaPath
+
+          $process = Start-Process -FilePath $env:AHK_EXE `
+            -ArgumentList @('/ErrorStdOut', $fullScriptPath) `
+            -RedirectStandardOutput $stdoutPath `
+            -RedirectStandardError $stderrPath `
+            -PassThru
+
+          $null = $process.WaitForExit($timeoutSeconds * 1000)
+          if (-not $process.HasExited) {
+            try { Stop-Process -Id $process.Id -Force } catch {}
+            Add-Content -LiteralPath $metaPath "timed_out=true"
+            throw "Timed out after $timeoutSeconds seconds"
+          }
+
+          Add-Content -LiteralPath $metaPath "exit_code=$($process.ExitCode)"
+
+          if ($process.ExitCode -ne 0) {
+            throw "Script exited with code $($process.ExitCode)"
+          }
+
+      - name: Print captured output
+        if: always()
+        shell: pwsh
+        run: |
+          $stdoutPath = Join-Path $env:GITHUB_WORKSPACE "artifacts\stdout.txt"
+          $stderrPath = Join-Path $env:GITHUB_WORKSPACE "artifacts\stderr.txt"
+          $metaPath = Join-Path $env:GITHUB_WORKSPACE "artifacts\run-metadata.txt"
+
+          Write-Host "--- run-metadata.txt ---"
+          if (Test-Path -LiteralPath $metaPath) { Get-Content -LiteralPath $metaPath }
+
+          Write-Host "--- stdout.txt ---"
+          if (Test-Path -LiteralPath $stdoutPath) { Get-Content -LiteralPath $stdoutPath }
+
+          Write-Host "--- stderr.txt ---"
+          if (Test-Path -LiteralPath $stderrPath) { Get-Content -LiteralPath $stderrPath }
+
+      - name: Upload run artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ahk-run-${{ github.run_id }}-${{ github.run_attempt }}
+          path: artifacts
+          if-no-files-found: warn
+          retention-days: 14

@@ -1,0 +1,101 @@
+name: AHK IPC stdio
+
+on:
+  push:
+    paths:
+      - ".github/workflows/ahk-ipc-stdio.yml"
+      - "scripts/tests/stdio/**"
+      - "tools/test_stdio_echo.ps1"
+      - "docs/stdio-echo.md"
+  pull_request:
+    paths:
+      - ".github/workflows/ahk-ipc-stdio.yml"
+      - "scripts/tests/stdio/**"
+      - "tools/test_stdio_echo.ps1"
+      - "docs/stdio-echo.md"
+  workflow_dispatch:
+    inputs:
+      ahk_version:
+        description: "AutoHotkey v2 release version"
+        required: true
+        default: "2.0.19"
+        type: string
+      timeout_seconds:
+        description: "Harness timeout in seconds"
+        required: true
+        default: "20"
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  stdio-echo:
+    runs-on: windows-latest
+    env:
+      DEFAULT_AHK_VERSION: 2.0.19
+      DEFAULT_TIMEOUT_SECONDS: 20
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Resolve workflow inputs
+        id: resolve
+        shell: pwsh
+        run: |
+          $ahkVersion = "${{ github.event.inputs.ahk_version }}"
+          if ([string]::IsNullOrWhiteSpace($ahkVersion)) { $ahkVersion = "${{ env.DEFAULT_AHK_VERSION }}" }
+
+          $timeoutSeconds = "${{ github.event.inputs.timeout_seconds }}"
+          if ([string]::IsNullOrWhiteSpace($timeoutSeconds)) { $timeoutSeconds = "${{ env.DEFAULT_TIMEOUT_SECONDS }}" }
+
+          "ahk_version=$ahkVersion" >> $env:GITHUB_OUTPUT
+          "timeout_seconds=$timeoutSeconds" >> $env:GITHUB_OUTPUT
+
+      - name: Download AutoHotkey v2
+        shell: pwsh
+        run: |
+          $version = "${{ steps.resolve.outputs.ahk_version }}"
+          $zipUrl = "https://github.com/AutoHotkey/AutoHotkey/releases/download/v$version/AutoHotkey_$version.zip"
+          $zipPath = Join-Path $env:RUNNER_TEMP "AutoHotkey.zip"
+          $extractPath = Join-Path $env:RUNNER_TEMP "AutoHotkey"
+
+          Invoke-WebRequest -Uri $zipUrl -OutFile $zipPath
+          Expand-Archive -LiteralPath $zipPath -DestinationPath $extractPath -Force
+
+          $ahkExe = Join-Path $extractPath "AutoHotkey64.exe"
+          if (-not (Test-Path -LiteralPath $ahkExe)) {
+            throw "AutoHotkey64.exe was not found after extracting $zipUrl"
+          }
+
+          "AHK_EXE=$ahkExe" >> $env:GITHUB_ENV
+
+      - name: Run stdio echo harness
+        shell: pwsh
+        env:
+          ARTIFACT_DIR: ${{ github.workspace }}\artifacts-ipc
+        run: |
+          & "${{ github.workspace }}\tools\test_stdio_echo.ps1" -TimeoutSeconds "${{ steps.resolve.outputs.timeout_seconds }}"
+
+      - name: Print captured output
+        if: always()
+        shell: pwsh
+        run: |
+          $artifactDir = Join-Path $env:GITHUB_WORKSPACE 'artifacts-ipc'
+          $files = @('summary.json', 'stdout-transcript.txt', 'stderr.txt', 'run-metadata.txt')
+          foreach ($file in $files) {
+            $path = Join-Path $artifactDir $file
+            Write-Host "--- $file ---"
+            if (Test-Path -LiteralPath $path) {
+              Get-Content -LiteralPath $path
+            }
+          }
+
+      - name: Upload IPC artifact
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: ahk-ipc-stdio-${{ github.run_id }}-${{ github.run_attempt }}
+          path: artifacts-ipc
+          if-no-files-found: warn
+          retention-days: 14
