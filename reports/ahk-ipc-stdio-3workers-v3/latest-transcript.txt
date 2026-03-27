@@ -1,0 +1,27 @@
+worker-001 < READY
+worker-002 < READY
+worker-003 < READY
+worker-001 > hello one
+worker-001 < echo=hello one
+worker-002 > hello two
+worker-002 < echo=hello two
+worker-003 > hello three
+worker-003 < echo=hello three
+worker-001 > ping
+worker-001 < pong
+worker-002 > ping
+worker-002 < pong
+worker-003 > ping
+worker-003 < pong
+worker-001 > time
+worker-001 < time=10:10:04
+worker-002 > time
+worker-002 < time=10:10:04
+worker-003 > time
+worker-003 < time=10:10:04
+worker-001 > exit
+worker-001 < bye
+worker-002 > exit
+worker-002 < bye
+worker-003 > exit
+worker-003 < bye

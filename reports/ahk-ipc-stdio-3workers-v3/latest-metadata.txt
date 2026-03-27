@@ -1,0 +1,17 @@
+timestamp_utc=2026-03-27T10:10:03Z
+ahk_exe=D:\a\_temp\AutoHotkey\AutoHotkey64.exe
+child_template_path=D:\a\ahk-scratches\ahk-scratches\scripts\tests\stdio\child_echo_multiworker_v2.ahk
+timeout_seconds=8.0
+worker_count=3
+worker-001.pid=2084
+worker-001.script=D:\a\ahk-scratches\ahk-scratches\artifacts-ipc-3workers-report-master-v3\runtime-workers\worker-001.ahk
+worker-001.log=D:\a\ahk-scratches\ahk-scratches\artifacts-ipc-3workers-report-master-v3\runtime-workers\worker-001.log
+worker-002.pid=2948
+worker-002.script=D:\a\ahk-scratches\ahk-scratches\artifacts-ipc-3workers-report-master-v3\runtime-workers\worker-002.ahk
+worker-002.log=D:\a\ahk-scratches\ahk-scratches\artifacts-ipc-3workers-report-master-v3\runtime-workers\worker-002.log
+worker-003.pid=8560
+worker-003.script=D:\a\ahk-scratches\ahk-scratches\artifacts-ipc-3workers-report-master-v3\runtime-workers\worker-003.ahk
+worker-003.log=D:\a\ahk-scratches\ahk-scratches\artifacts-ipc-3workers-report-master-v3\runtime-workers\worker-003.log
+worker-001.exit_code=0
+worker-002.exit_code=0
+worker-003.exit_code=0
