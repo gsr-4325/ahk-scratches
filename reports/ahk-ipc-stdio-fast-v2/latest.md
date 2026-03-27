@@ -1,10 +1,10 @@
 # AHK IPC stdio latest report
 
 - workflow: AHK IPC stdio report master v2
-- run id: 23636989703
+- run id: 23637218814
 - run attempt: 1
 - ref: refs/heads/master
-- sha: ce1875f8580621ddecf1289ac566eddc770dd64a
+- sha: 50623eeaba8a5f5217a1f5e33d0e724ebf78ac50
 
 ## summary.json
 ```json
@@ -27,7 +27,7 @@
     "> hello CI",
     "< echo=hello CI",
     "> time",
-    "< time=08:05:32",
+    "< time=08:12:44",
     "> exit",
     "< bye"
   ],
@@ -43,7 +43,7 @@
 > hello CI
 < echo=hello CI
 > time
-< time=08:05:32
+< time=08:12:44
 > exit
 < bye
 ```
@@ -55,10 +55,10 @@
 
 ## run-metadata.txt
 ```text
-timestamp_utc=2026-03-27T08:05:32Z
+timestamp_utc=2026-03-27T08:12:44Z
 ahk_exe=D:\a\_temp\AutoHotkey\AutoHotkey64.exe
 child_path=D:\a\ahk-scratches\ahk-scratches\scripts\tests\stdio\child_echo_v2.ahk
 timeout_seconds=4.0
-pid=3884
+pid=5488
 exit_code=0
 ```
