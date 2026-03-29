@@ -31,7 +31,21 @@ BuildState() {
 }
 ```
 
-## 3. ローカル static 変数
+## 3. global 変数
+
+ユーザー定義の global 変数には `g_` を付ける。
+ユーザー定義の superglobal も、特別な別表記にはせず、同じく `g_` を使う。
+`A_ScriptDir` などの組み込み superglobal は、そのまま組み込み表記を使う。
+
+### Preferred
+
+```autohotkey
+g_mWorkersByID := Map()
+g_sPathConfig := ""
+g_fnOnMessage := 0
+```
+
+## 4. ローカル static 変数
 
 関数内の `static` 変数にも `_` を付ける。
 `static` は寿命は長いが、スコープはその関数のローカルだからである。
@@ -46,7 +60,50 @@ GetCacheValue(sKey) {
 }
 ```
 
-## 4. ネストされた関数
+## 5. 定数的な値
+
+AutoHotkey には一般的な意味での定数がないが、意味的に不変として扱う値は定数的な表記にする。
+マジックナンバーやマジック文字列は、意味があるものや再利用されるものは名前を与える。
+定数的な値の名前は `UPPER_SNAKE_CASE` を使う。
+
+### Preferred
+
+```autohotkey
+MAX_RETRY_COUNT := 3
+WM_APP_WORKER_READY := 0x8001
+URL_BASE_DOCS := "https://example.com/docs"
+```
+
+### Avoid
+
+```autohotkey
+_iMaxRetryCount := 3
+if ( 3 == _iRetryCount ) {
+}
+```
+
+## 6. キーワードの大文字小文字
+
+`if`、`for`、`return`、`loop`、`try`、`catch`、`class`、`static`、`global` などのキーワードは小文字で統一する。
+関数名、メソッド名、クラス名との見分けを良くし、見た目の一貫性を保つためである。
+
+### Preferred
+
+```autohotkey
+if ( 4 == iValue ) {
+    return true
+}
+
+for _iIndex, _sItem in aItems {
+    try {
+        ProcessItem(_sItem)
+    } catch _oErr {
+        return false
+    }
+}
+```
+
+## 7. ネストされた関数
 
 関数内に定義するネスト関数にも先頭に `_` を付ける。
 ネスト関数は外側の関数のローカルな実装要素として扱う。
@@ -63,7 +120,43 @@ GetSomething() {
 }
 ```
 
-## 5. 関数名とメソッド名のスタイル
+## 8. クラス名と変数名の語順
+
+同一ディレクトリや同一文脈で、同種のクラスや変数が並ぶことを想定し、共通の役割やカテゴリを先に置き、区別要素は後ろに置く。
+クラス名では共通のベース概念を先頭に置き、差異となる特性は接尾に置く。
+変数名でも、接頭辞の後ろでは `Url` や `Path` のような共通カテゴリを先に置く。
+
+### Bad
+
+```autohotkey
+WindowMessageTransportProfile
+StdIOTransportProfile
+NamedPipeTransportProfile
+```
+
+```autohotkey
+sFooUrl := ""
+sFooPageAUrl := ""
+sBarUrl := ""
+sBarPageAUrl := ""
+```
+
+### Good
+
+```autohotkey
+TransportProfileWindowMessage
+TransportProfileStdIO
+TransportProfileNamedPipe
+```
+
+```autohotkey
+sUrlFoo := ""
+sUrlFooPageA := ""
+sUrlBar := ""
+sUrlBarPageA := ""
+```
+
+## 9. 関数名とメソッド名のスタイル
 
 関数名とメソッド名は PascalCase を使う。
 変数名とは見た目を分け、`GetSomething()` や `SetSomething()` の形を揃えやすくするためである。
@@ -77,7 +170,7 @@ RunWorker()
 OnMessage(wParam, lParam, msg, hWnd)
 ```
 
-## 6. 関数名とメソッド名の意味分類
+## 10. 関数名とメソッド名の意味分類
 
 値を取得して返す目的の関数名は、可能な限り `Get` で始める。
 クラスのプロパティや内部状態を変更する関数名は `Set` で始める。
@@ -110,7 +203,7 @@ DoWork()
 DoOnMessage()
 ```
 
-## 7. 略語の大文字表記
+## 11. 略語の大文字表記
 
 `ID`、`PID`、`URL`、`MS` のような定着した略語は、識別子の中でも大文字を維持する。
 これにより、`Id` と `ID`、`Pid` と `PID` のような表記ゆれを防ぐ。
@@ -132,9 +225,9 @@ Win32 の window handle については、慣用表記として `hWnd` を使う
 hWndMain
 ```
 
-## 8. prefix の扱い
+## 12. prefix の扱い
 
-### 8.1 汎用型 prefix
+### 12.1 汎用型 prefix
 
 現時点で採用する汎用型 prefix は次とする。
 
@@ -148,7 +241,7 @@ hWndMain
 - `v`: variant / mixed
 - `fn`: function reference / callback reference
 
-### 8.2 `cb` の意味
+### 12.2 `cb` の意味
 
 `cb` は callback ではなく、byte count を意味する。
 バイト数を表す識別子にだけ使う。
@@ -163,9 +256,9 @@ _fnOnMessage
 _fnOnComplete
 ```
 
-### 8.3 path と URL
+### 12.3 Path と URL
 
-`path` と `URL` は専用 prefix にしない。
+`Path` と `URL` は専用 prefix にしない。
 どちらも多くの場合 string なので、string の `s` を先頭に置き、意味語として `Path` や `URL` を続ける。
 パス系の語順は `sPathDirSomething` のように、`Path` を先に置く。
 
@@ -186,7 +279,7 @@ sDirPathLog
 sFilePathReport
 ```
 
-### 8.4 時間単位
+### 12.4 時間単位
 
 `ms` は専用 prefix にしない。
 時間値はまず実データ型を prefix で表し、単位は識別子の末尾に付ける。
@@ -199,7 +292,7 @@ fElapsedMS
 iRetryDelayMS
 ```
 
-### 8.5 PID, handle, pointer
+### 12.5 PID, handle, pointer
 
 process ID は integer として扱うため、`iPID...` の形を使う。
 window handle は Win32 慣用に合わせて `hWnd...` を使う。
@@ -214,7 +307,21 @@ ptrData
 ptrBuffer
 ```
 
-## 9. ブレースの書き方
+### 12.6 複合型
+
+複合型で、想定する型の組み合わせが少なく、複合 prefix に意味がある場合は、複合 prefix を使ってよい。
+組み合わせが多い場合や、複合 prefix がかえって読みにくい場合は `v` を使う。
+ただし、ここに厳密な数値基準は設けず、最終的にはコーダーの裁量に委ねる。
+
+### Examples
+
+```autohotkey
+_aiSelection
+_asTokenOrList
+vPayload
+```
+
+## 13. ブレースの書き方
 
 条件ブロックでは `{}` の省略を禁止する。
 クラス、関数、メソッド、条件ブロックの開始ブレースは、宣言や条件式と同じ行に置く。
@@ -256,7 +363,7 @@ DoSomething() {
 }
 ```
 
-## 10. 条件式での比較順序
+## 14. 条件式での比較順序
 
 `==` などで固定値と変数を比較する時は、固定値を左側、変数を右側に置く。
 
@@ -274,9 +381,10 @@ if ( 4 == iValue ) {
 }
 ```
 
-## 11. 命名の組み合わせ方
+## 15. 命名の組み合わせ方
 
 ローカル変数でハンガリアンノーテーションを使う場合は、`_` を最初に置き、その後ろにハンガリアンの接頭辞を続ける。
+global 変数は `g_` を最初に置き、その後ろにハンガリアンの接頭辞を続ける。
 
 ### Examples
 
@@ -284,17 +392,18 @@ if ( 4 == iValue ) {
 _sName
 _iCount
 _bPaused
-_mUsersById
+_mUsersByID
 _iPIDWorker
 _sPathConfig
 _iTimeoutMS
+g_sUrlBase
+g_mWorkersByID
 ```
 
-## 12. 現時点で未記載のもの
+## 16. 現時点で未記載のもの
 
 以下はまだ確定していないため、この版では規約化しない。
 
-- collection 名にアクセス方法をどこまで必須化するか
-- 複合型を複合 prefix で表すか、`v` で表すかの最終方針
+- collection 名に、lookup の基準や並び順の意味をどこまで含めるか
 
 今後、合意できたものから順次このドキュメントへ追記する。
