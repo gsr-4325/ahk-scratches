@@ -453,7 +453,92 @@ if ( 4 == iValue ) {
 }
 ```
 
-## 19. Combined naming pattern
+## 19. Early return
+
+For methods and functions that return a value, prefer early return and guard clauses.
+Do not delay the return value unnecessarily by wrapping the main logic inside deep conditional blocks.
+Use early return to keep the main path short and visible.
+
+### Bad
+
+```autohotkey
+GetUserLabel(userId) {
+    if ( UserExists(userId) ) {
+        if ( UserHasLabel(userId) ) {
+            return LoadUserLabel(userId)
+        }
+    }
+
+    return ""
+}
+```
+
+### Good
+
+```autohotkey
+GetUserLabel(userId) {
+    if ( !UserExists(userId) ) {
+        return ""
+    }
+
+    if ( !UserHasLabel(userId) ) {
+        return ""
+    }
+
+    return LoadUserLabel(userId)
+}
+```
+
+## 20. Conditional nesting
+
+Avoid nested conditional blocks whenever practical.
+Keep `if` block depth to one level whenever possible.
+If the logic would grow into two or more nested levels, extract a helper method or a nested function.
+
+### Bad
+
+```autohotkey
+DoSomething(sValue) {
+    if ( bSomething ) {
+        if ( bAnother ) {
+            if ( bYetAnother ) {
+                ; yet do other thing here
+            }
+
+            ; do another thing here
+        }
+
+        ; do something here
+    }
+}
+```
+
+### Good
+
+```autohotkey
+DoSomething(sValue) {
+    if ( !bSomething ) {
+        return
+    }
+
+    _DoAnother()
+    ; do something here
+
+    _DoAnother() {
+        if ( !bAnother ) {
+            return
+        }
+
+        if ( bYetAnother ) {
+            ; yet do other thing here
+        }
+
+        ; do another thing here
+    }
+}
+```
+
+## 21. Combined naming pattern
 
 For local variables, place `_` first and then the Hungarian prefix.
 For global variables, place `g_` first and then the Hungarian prefix.
@@ -472,7 +557,7 @@ g_sURLBase
 g_mWorkersByID
 ```
 
-## 20. Not yet codified
+## 22. Not yet codified
 
 The following topics are intentionally left undecided for now.
 
