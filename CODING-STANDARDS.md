@@ -14,12 +14,102 @@ Meaning hints should be included whenever they materially improve readability. T
 Use one file per class as the default rule.
 Exceptions may exist, but the default structure is one class per file.
 
-## 3. Comment language
+## 3. File naming
+
+The file name should match the primary class name defined in that file.
+Use the class name as the file name.
+
+### Preferred
+
+```text
+TransportProfileStdIO.ahk
+TransportProfileNamedPipe.ahk
+WorkerSession.ahk
+```
+
+## 4. `#Include` order
+
+Place `#Include` directives near the top of the file.
+Order them from more external and foundational dependencies to more local and feature-specific ones.
+Use blank lines between groups.
+Within the same group, sort alphabetically whenever dependency order does not require something else.
+
+Recommended grouping order:
+
+1. third-party or external libraries
+2. project-wide shared or core modules
+3. local feature-specific modules
+
+### Preferred
+
+```autohotkey
+#Include <ExternalLib\JXON>
+#Include <ExternalLib\WebView2\WebView2>
+
+#Include Core\Result.ahk
+#Include Core\Win32Helpers.ahk
+
+#Include %A_ScriptDir%\TransportProfileStdIO.ahk
+#Include %A_ScriptDir%\WorkerSession.ahk
+```
+
+## 5. Comment language
 
 Write code comments in English.
 This includes inline comments, block comments, and explanatory notes in source files.
 
-## 4. Local variables
+## 6. Docblocks
+
+Use `/** ... */` docblocks for public classes, public functions, and public methods.
+Protected-like and private-like methods should use docblocks when their behavior is non-obvious or easy to misuse.
+Use a lightweight tag-based format with `@` tags.
+This format is concise, familiar, easy to scan, and easy to search.
+
+The first non-empty line inside the docblock should be a short purpose statement.
+Use the following tags when applicable:
+
+- `@param`
+- `@returns`
+- `@throws`
+- `@since`
+- `@remarks` optional
+
+Use `@since x.y.z` to record the first version that introduced the documented class, function, or method.
+Use `@returns {Void}` when the routine does not return a meaningful value.
+Use `@throws None.` only when explicit clarification is valuable. Otherwise omit `@throws` when no intentional exception contract exists.
+
+### Preferred
+
+```autohotkey
+/**
+ * Get the worker state for a given worker ID.
+ *
+ * @param {Integer} iWorkerID Worker ID.
+ * @returns {String} Current worker state.
+ * @throws {Error} Thrown when the worker registry is not initialized.
+ * @since 1.2.4
+ */
+GetWorkerState(iWorkerID) {
+    if ( !IsObject(g_mWorkersByID) ) {
+        throw Error("Worker registry is not initialized.")
+    }
+
+    return g_mWorkersByID[iWorkerID].state
+}
+```
+
+```autohotkey
+/**
+ * Transport profile for StdIO-based communication.
+ *
+ * @since 1.3.0
+ * @remarks Thin transport profile for child-process I/O.
+ */
+class TransportProfileStdIO {
+}
+```
+
+## 7. Local variables
 
 Local variables must start with `_`.
 Function parameters do not use `_`.
@@ -42,7 +132,7 @@ BuildState() {
 }
 ```
 
-## 5. Global variables
+## 8. Global variables
 
 User-defined global variables must start with `g_`.
 User-defined superglobals use the same `g_` form. They do not get a separate special notation.
@@ -56,7 +146,7 @@ g_sPathConfig := ""
 g_fnOnMessage := 0
 ```
 
-## 6. Local static variables
+## 9. Local static variables
 
 Function-local `static` variables also use `_`.
 A `static` variable has a longer lifetime, but its scope is still local to that function.
@@ -71,7 +161,7 @@ GetCacheValue(sKey) {
 }
 ```
 
-## 7. Constant-like values
+## 10. Constant-like values
 
 AutoHotkey does not provide constants in the usual sense, but values treated as semantically immutable should use constant-like notation.
 Avoid unexplained magic numbers and magic strings when the value has meaning or is reused.
@@ -93,7 +183,7 @@ if ( 3 == _iRetryCount ) {
 }
 ```
 
-## 8. Keyword casing
+## 11. Keyword casing
 
 Language keywords such as `if`, `for`, `return`, `loop`, `try`, `catch`, `class`, `static`, and `global` should be written in lowercase.
 This improves consistency and makes keywords visually distinct from class, function, and method names.
@@ -114,7 +204,7 @@ for _iIndex, _sItem in aItems {
 }
 ```
 
-## 9. Nested functions
+## 12. Nested functions
 
 Nested functions must start with `_`.
 Treat them as local implementation details of the enclosing function.
@@ -131,7 +221,7 @@ GetSomething() {
 }
 ```
 
-## 10. Pseudo-visibility for class methods
+## 13. Pseudo-visibility for class methods
 
 AutoHotkey does not provide `protected` or `private`, but method names should still communicate intended visibility.
 Methods without a leading underscore are assumed public.
@@ -153,7 +243,7 @@ class Sample {
 }
 ```
 
-## 11. Ordering of words in names
+## 14. Ordering of words in names
 
 When similar classes or variables appear together in the same directory or context, put the shared category first and the distinguishing trait later.
 In class names, the common base concept should come first.
@@ -189,7 +279,7 @@ sUrlBar := ""
 sUrlBarPageA := ""
 ```
 
-## 12. Function and method style
+## 15. Function and method style
 
 Function names and method names use PascalCase.
 This keeps them visually distinct from variables and works naturally with forms such as `GetSomething()` and `SetSomething()`.
@@ -203,7 +293,7 @@ RunWorker()
 OnMessage(wParam, lParam, msg, hWnd)
 ```
 
-## 13. Function and method semantics
+## 16. Function and method semantics
 
 Functions and methods whose primary purpose is to obtain and return a value should start with `Get` whenever practical.
 Within that `Get`-based form, choose the remainder of the name so that it reads as naturally as possible.
@@ -243,7 +333,7 @@ DoWork()
 DoOnMessage()
 ```
 
-## 14. Abbreviation casing
+## 17. Abbreviation casing
 
 Established abbreviations such as `ID`, `PID`, `URL`, and `MS` keep their uppercase form inside identifiers.
 This avoids drift such as `Id` vs `ID` or `Pid` vs `PID`.
@@ -259,9 +349,9 @@ iTimeoutMS
 hWndMain
 ```
 
-## 15. Prefix usage
+## 18. Prefix usage
 
-### 15.1 Generic type prefixes
+### 18.1 Generic type prefixes
 
 Use the following generic type prefixes.
 
@@ -275,7 +365,7 @@ Use the following generic type prefixes.
 - `v`: variant or mixed
 - `fn`: function reference or callback reference
 
-### 15.2 `cb`
+### 18.2 `cb`
 
 `cb` means byte count, not callback.
 Use it only for byte counts.
@@ -290,7 +380,7 @@ _fnOnMessage
 _fnOnComplete
 ```
 
-### 15.3 `Path` and `URL`
+### 18.3 `Path` and `URL`
 
 `Path` and `URL` are not special prefixes.
 Most such values are strings, so use the string prefix first and then the meaning word.
@@ -313,7 +403,7 @@ sDirPathLog
 sFilePathReport
 ```
 
-### 15.4 Time units
+### 18.4 Time units
 
 `ms` is not a special prefix.
 Represent the actual data type first, then place the time unit at the end of the identifier.
@@ -326,7 +416,7 @@ fElapsedMS
 iRetryDelayMS
 ```
 
-### 15.5 `PID`, handle, and pointer
+### 18.5 `PID`, handle, and pointer
 
 Process IDs are treated as integers, so use the `iPID...` form.
 Window handles use the Win32 conventional `hWnd...` form.
@@ -341,7 +431,7 @@ ptrData
 ptrBuffer
 ```
 
-### 15.6 Compound types
+### 18.6 Compound types
 
 When the number of intended type combinations is small and a compound prefix remains readable, a compound prefix is allowed.
 When the combinations become broad or the compound prefix becomes harder to read, use `v` instead.
@@ -355,7 +445,7 @@ _asTokenOrList
 vPayload
 ```
 
-### 15.7 `DllCall` wrapper naming
+### 18.7 `DllCall` wrapper naming
 
 Thin wrappers around Win32 or other external APIs should preserve the original API name as closely as practical.
 Do not mechanically force `Get` onto a thin wrapper only because it returns a value.
@@ -377,7 +467,7 @@ GetWorkerState()
 GetReadBufferSize()
 ```
 
-## 16. Meaning hints in names
+## 19. Meaning hints in names
 
 Include concise meaning hints whenever they improve readability.
 This applies to variable names in general, not only to collections.
@@ -393,7 +483,7 @@ sPathDirLog
 sUrlFooPageA
 ```
 
-## 17. Braces
+## 20. Braces
 
 Do not omit `{}` for conditional blocks.
 For classes, functions, methods, and conditional blocks, the opening brace must be on the same line as the declaration or condition.
@@ -435,7 +525,7 @@ DoSomething() {
 }
 ```
 
-## 18. Comparison order in conditions
+## 21. Comparison order in conditions
 
 When comparing a fixed value and a variable with `==` or similar operators, place the fixed value on the left and the variable on the right.
 
@@ -453,7 +543,7 @@ if ( 4 == iValue ) {
 }
 ```
 
-## 19. Early return
+## 22. Early return
 
 For methods and functions that return a value, prefer early return and guard clauses.
 Do not delay the return value unnecessarily by wrapping the main logic inside deep conditional blocks.
@@ -489,7 +579,7 @@ GetUserLabel(userId) {
 }
 ```
 
-## 20. Conditional nesting
+## 23. Conditional nesting
 
 Avoid nested conditional blocks whenever practical.
 Keep `if` block depth to one level whenever possible.
@@ -538,7 +628,7 @@ DoSomething(sValue) {
 }
 ```
 
-## 21. Error handling policy
+## 24. Error handling policy
 
 Use `throw` for contract violations, internal inconsistencies, and Win32 or `DllCall` failures.
 Use return values for expected absence, lookup misses, or other normal non-exceptional cases.
@@ -568,7 +658,33 @@ FindWorkerByID(iWorkerID) {
 }
 ```
 
-## 22. Combined naming pattern
+## 25. Trailing commas
+
+Trailing commas are allowed in multi-line `Array(...)`, `Map(...)`, and argument lists where the language syntax permits them.
+Use them to keep diffs smaller and make future additions cleaner.
+
+### Preferred
+
+```autohotkey
+_aItems := Array(
+    "one",
+    "two",
+    "three",
+)
+
+_mOptions := Map(
+    "timeout", 5000,
+    "retry", 3,
+)
+
+RunTask(
+    sName,
+    iTimeoutMS,
+    bForce,
+)
+```
+
+## 26. Combined naming pattern
 
 For local variables, place `_` first and then the Hungarian prefix.
 For global variables, place `g_` first and then the Hungarian prefix.
@@ -587,7 +703,7 @@ g_sURLBase
 g_mWorkersByID
 ```
 
-## 23. Not yet codified
+## 27. Not yet codified
 
 The following topics are intentionally left undecided for now.
 
