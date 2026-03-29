@@ -1,4 +1,4 @@
-# AHK Coding Standards
+# AutoHotkey Coding Standards
 
 This document records the coding standards used in this repository.
 Items that are not yet agreed should not be codified until they are decided.
