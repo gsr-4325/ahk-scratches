@@ -90,7 +90,7 @@ Use `@throws None.` only when explicit clarification is valuable. Otherwise omit
  * @since 1.2.4
  */
 GetWorkerState(iWorkerID) {
-    if ( !IsObject(g_mWorkersByID) ) {
+    if ( ! IsObject(g_mWorkersByID) ) {
         throw Error("Worker registry is not initialized.")
     }
 
@@ -118,8 +118,8 @@ This makes local variables visually distinct from parameters.
 ### Examples
 
 ```autohotkey
-GetUserLabel(userId, sDefaultLabel := "") {
-    local _sUserLabel := LoadUserLabel(userId)
+GetUserLabel(iUserID, sDefaultLabel := "") {
+    local _sUserLabel := LoadUserLabel(iUserID)
     return _sUserLabel != "" ? _sUserLabel : sDefaultLabel
 }
 ```
@@ -554,10 +554,10 @@ Use early return to keep the main path short and visible.
 ### Avoid
 
 ```autohotkey
-GetUserLabel(userId) {
-    if ( UserExists(userId) ) {
-        if ( UserHasLabel(userId) ) {
-            return LoadUserLabel(userId)
+GetUserLabel(iUserID) {
+    if ( UserExists(iUserID) ) {
+        if ( UserHasLabel(iUserID) ) {
+            return LoadUserLabel(iUserID)
         }
     }
 
@@ -568,16 +568,16 @@ GetUserLabel(userId) {
 ### Preferred
 
 ```autohotkey
-GetUserLabel(userId) {
-    if ( !UserExists(userId) ) {
+GetUserLabel(iUserID) {
+    if ( ! UserExists(iUserID) ) {
         return ""
     }
 
-    if ( !UserHasLabel(userId) ) {
+    if ( ! UserHasLabel(iUserID) ) {
         return ""
     }
 
-    return LoadUserLabel(userId)
+    return LoadUserLabel(iUserID)
 }
 ```
 
@@ -591,9 +591,9 @@ If the logic would grow into two or more nested levels, extract a helper method 
 
 ```autohotkey
 DoSomething(sValue) {
-    if ( bSomething ) {
-        if ( bAnother ) {
-            if ( bYetAnother ) {
+    if ( _bSomething ) {
+        if ( _bAnother ) {
+            if ( _bYetAnother ) {
                 ; yet do other thing here
             }
 
@@ -609,7 +609,7 @@ DoSomething(sValue) {
 
 ```autohotkey
 DoSomething(sValue) {
-    if ( !bSomething ) {
+    if ( ! _bSomething ) {
         return
     }
 
@@ -617,11 +617,11 @@ DoSomething(sValue) {
     ; do something here
 
     _DoAnother() {
-        if ( !bAnother ) {
+        if ( ! _bAnother ) {
             return
         }
 
-        if ( bYetAnother ) {
+        if ( _bYetAnother ) {
             ; yet do other thing here
         }
 
@@ -642,7 +642,7 @@ When a return-value-based miss is used, choose a result that is natural for the 
 ```autohotkey
 GetPipeHandle(sPipeName) {
     _hPipe := _CreateNamedPipe(sPipeName)
-    if ( !_hPipe ) {
+    if ( ! _hPipe ) {
         throw Error("Failed to create named pipe.")
     }
 
@@ -652,7 +652,7 @@ GetPipeHandle(sPipeName) {
 
 ```autohotkey
 FindWorkerByID(iWorkerID) {
-    if ( !g_mWorkersByID.Has(iWorkerID) ) {
+    if ( ! g_mWorkersByID.Has(iWorkerID) ) {
         return ""
     }
 
