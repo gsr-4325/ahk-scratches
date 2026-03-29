@@ -1,18 +1,29 @@
 # AHK Coding Standards
 
-このドキュメントは、このリポジトリで採用する AutoHotkey のコーディング規約を記録する。
-未確定の論点は、確定するまで規約化しない。
+This document records the coding standards used in this repository.
+Items that are not yet agreed should not be codified until they are decided.
 
-## 1. 基本方針
+## 1. General principles
 
-このリポジトリでは、AutoHotkey コードにハンガリアンノーテーションを採用する。
-ただし、prefix は必要最小限に絞り、汎用型 prefix と本当に意味の強い専用表記だけを使う。
+This repository adopts Hungarian notation for AutoHotkey code.
+Prefixes should remain minimal and practical. Use generic type prefixes plus a small number of strong, established special forms.
+Meaning hints should be included whenever they materially improve readability. This principle applies to all variable names, not only collections.
 
-## 2. ローカル変数
+## 2. One file per class
 
-ローカル変数には必ず先頭に `_` を付ける。
-関数パラメーターにはこのルールを適用しない。
-これにより、ローカル変数とパラメーターを視覚的に区別しやすくする。
+Use one file per class as the default rule.
+Exceptions may exist, but the default structure is one class per file.
+
+## 3. Comment language
+
+Write code comments in English.
+This includes inline comments, block comments, and explanatory notes in source files.
+
+## 4. Local variables
+
+Local variables must start with `_`.
+Function parameters do not use `_`.
+This makes local variables visually distinct from parameters.
 
 ### Examples
 
@@ -31,11 +42,11 @@ BuildState() {
 }
 ```
 
-## 3. global 変数
+## 5. Global variables
 
-ユーザー定義の global 変数には `g_` を付ける。
-ユーザー定義の superglobal も、特別な別表記にはせず、同じく `g_` を使う。
-`A_ScriptDir` などの組み込み superglobal は、そのまま組み込み表記を使う。
+User-defined global variables must start with `g_`.
+User-defined superglobals use the same `g_` form. They do not get a separate special notation.
+Built-in superglobals such as `A_ScriptDir` keep their built-in names.
 
 ### Preferred
 
@@ -45,10 +56,10 @@ g_sPathConfig := ""
 g_fnOnMessage := 0
 ```
 
-## 4. ローカル static 変数
+## 6. Local static variables
 
-関数内の `static` 変数にも `_` を付ける。
-`static` は寿命は長いが、スコープはその関数のローカルだからである。
+Function-local `static` variables also use `_`.
+A `static` variable has a longer lifetime, but its scope is still local to that function.
 
 ### Example
 
@@ -60,11 +71,11 @@ GetCacheValue(sKey) {
 }
 ```
 
-## 5. 定数的な値
+## 7. Constant-like values
 
-AutoHotkey には一般的な意味での定数がないが、意味的に不変として扱う値は定数的な表記にする。
-マジックナンバーやマジック文字列は、意味があるものや再利用されるものは名前を与える。
-定数的な値の名前は `UPPER_SNAKE_CASE` を使う。
+AutoHotkey does not provide constants in the usual sense, but values treated as semantically immutable should use constant-like notation.
+Avoid unexplained magic numbers and magic strings when the value has meaning or is reused.
+Constant-like names use `UPPER_SNAKE_CASE`.
 
 ### Preferred
 
@@ -82,10 +93,10 @@ if ( 3 == _iRetryCount ) {
 }
 ```
 
-## 6. キーワードの大文字小文字
+## 8. Keyword casing
 
-`if`、`for`、`return`、`loop`、`try`、`catch`、`class`、`static`、`global` などのキーワードは小文字で統一する。
-関数名、メソッド名、クラス名との見分けを良くし、見た目の一貫性を保つためである。
+Language keywords such as `if`, `for`, `return`, `loop`, `try`, `catch`, `class`, `static`, and `global` should be written in lowercase.
+This improves consistency and makes keywords visually distinct from class, function, and method names.
 
 ### Preferred
 
@@ -103,10 +114,10 @@ for _iIndex, _sItem in aItems {
 }
 ```
 
-## 7. ネストされた関数
+## 9. Nested functions
 
-関数内に定義するネスト関数にも先頭に `_` を付ける。
-ネスト関数は外側の関数のローカルな実装要素として扱う。
+Nested functions must start with `_`.
+Treat them as local implementation details of the enclosing function.
 
 ### Example
 
@@ -120,11 +131,33 @@ GetSomething() {
 }
 ```
 
-## 8. クラス名と変数名の語順
+## 10. Pseudo-visibility for class methods
 
-同一ディレクトリや同一文脈で、同種のクラスや変数が並ぶことを想定し、共通の役割やカテゴリを先に置き、区別要素は後ろに置く。
-クラス名では共通のベース概念を先頭に置き、差異となる特性は接尾に置く。
-変数名でも、接頭辞の後ろでは `Url` や `Path` のような共通カテゴリを先に置く。
+AutoHotkey does not provide `protected` or `private`, but method names should still communicate intended visibility.
+Methods without a leading underscore are assumed public.
+Methods with a single leading underscore are treated as protected-like.
+Methods with a double leading underscore are treated as private-like.
+
+### Example
+
+```autohotkey
+class Sample {
+    GetSomething() {
+    }
+
+    _GetOverridden() {
+    }
+
+    __GetUsedOnlyInThisClass() {
+    }
+}
+```
+
+## 11. Ordering of words in names
+
+When similar classes or variables appear together in the same directory or context, put the shared category first and the distinguishing trait later.
+In class names, the common base concept should come first.
+In variable names, after the Hungarian prefix, the common category should come first.
 
 ### Bad
 
@@ -156,10 +189,10 @@ sUrlBar := ""
 sUrlBarPageA := ""
 ```
 
-## 9. 関数名とメソッド名のスタイル
+## 12. Function and method style
 
-関数名とメソッド名は PascalCase を使う。
-変数名とは見た目を分け、`GetSomething()` や `SetSomething()` の形を揃えやすくするためである。
+Function names and method names use PascalCase.
+This keeps them visually distinct from variables and works naturally with forms such as `GetSomething()` and `SetSomething()`.
 
 ### Preferred
 
@@ -170,12 +203,14 @@ RunWorker()
 OnMessage(wParam, lParam, msg, hWnd)
 ```
 
-## 10. 関数名とメソッド名の意味分類
+## 13. Function and method semantics
 
-値を取得して返す目的の関数名は、可能な限り `Get` で始める。
-クラスのプロパティや内部状態を変更する関数名は `Set` で始める。
-それ以外の処理は、`Do` のような総称 prefix を規約として強制せず、具体的な動詞で始める。
-イベントハンドラやコールバックの受け口は `On` で始めてよい。
+Functions and methods that retrieve and return a value should use `Get` whenever it remains natural and readable.
+Functions and methods that change object state should use `Set`.
+Other actions should use a concrete verb rather than a generic `Do` prefix.
+Event handlers and callback entry points may use `On`.
+Natural English naming takes priority over mechanically forcing a `Get` form.
+A name like `GetStringJoined()` is acceptable when it reads naturally, but `Get` is not mandatory if it makes the name awkward.
 
 ### Preferred
 
@@ -203,10 +238,11 @@ DoWork()
 DoOnMessage()
 ```
 
-## 11. 略語の大文字表記
+## 14. Abbreviation casing
 
-`ID`、`PID`、`URL`、`MS` のような定着した略語は、識別子の中でも大文字を維持する。
-これにより、`Id` と `ID`、`Pid` と `PID` のような表記ゆれを防ぐ。
+Established abbreviations such as `ID`, `PID`, `URL`, and `MS` keep their uppercase form inside identifiers.
+This avoids drift such as `Id` vs `ID` or `Pid` vs `PID`.
+For Win32 window handles, use the conventional `hWnd` form.
 
 ### Preferred
 
@@ -215,21 +251,14 @@ iPIDWorker
 sURLBase
 GetSomethingByID()
 iTimeoutMS
-```
-
-Win32 の window handle については、慣用表記として `hWnd` を使う。
-
-### Preferred
-
-```autohotkey
 hWndMain
 ```
 
-## 12. prefix の扱い
+## 15. Prefix usage
 
-### 12.1 汎用型 prefix
+### 15.1 Generic type prefixes
 
-現時点で採用する汎用型 prefix は次とする。
+Use the following generic type prefixes.
 
 - `s`: string
 - `i`: integer
@@ -238,14 +267,14 @@ hWndMain
 - `a`: array
 - `m`: map
 - `o`: object
-- `v`: variant / mixed
-- `fn`: function reference / callback reference
+- `v`: variant or mixed
+- `fn`: function reference or callback reference
 
-### 12.2 `cb` の意味
+### 15.2 `cb`
 
-`cb` は callback ではなく、byte count を意味する。
-バイト数を表す識別子にだけ使う。
-コールバック関数や関数参照には使わない。
+`cb` means byte count, not callback.
+Use it only for byte counts.
+Do not use it for callback functions or callable references.
 
 ### Preferred
 
@@ -256,11 +285,11 @@ _fnOnMessage
 _fnOnComplete
 ```
 
-### 12.3 Path と URL
+### 15.3 `Path` and `URL`
 
-`Path` と `URL` は専用 prefix にしない。
-どちらも多くの場合 string なので、string の `s` を先頭に置き、意味語として `Path` や `URL` を続ける。
-パス系の語順は `sPathDirSomething` のように、`Path` を先に置く。
+`Path` and `URL` are not special prefixes.
+Most such values are strings, so use the string prefix first and then the meaning word.
+For path-related names, put `Path` before finer-grained qualifiers.
 
 ### Preferred
 
@@ -279,10 +308,10 @@ sDirPathLog
 sFilePathReport
 ```
 
-### 12.4 時間単位
+### 15.4 Time units
 
-`ms` は専用 prefix にしない。
-時間値はまず実データ型を prefix で表し、単位は識別子の末尾に付ける。
+`ms` is not a special prefix.
+Represent the actual data type first, then place the time unit at the end of the identifier.
 
 ### Preferred
 
@@ -292,11 +321,11 @@ fElapsedMS
 iRetryDelayMS
 ```
 
-### 12.5 PID, handle, pointer
+### 15.5 `PID`, handle, and pointer
 
-process ID は integer として扱うため、`iPID...` の形を使う。
-window handle は Win32 慣用に合わせて `hWnd...` を使う。
-pointer は `ptr...` を使い、`p...` には省略しない。
+Process IDs are treated as integers, so use the `iPID...` form.
+Window handles use the Win32 conventional `hWnd...` form.
+Pointers use `ptr...` and should not be shortened to `p...`.
 
 ### Preferred
 
@@ -307,11 +336,11 @@ ptrData
 ptrBuffer
 ```
 
-### 12.6 複合型
+### 15.6 Compound types
 
-複合型で、想定する型の組み合わせが少なく、複合 prefix に意味がある場合は、複合 prefix を使ってよい。
-組み合わせが多い場合や、複合 prefix がかえって読みにくい場合は `v` を使う。
-ただし、ここに厳密な数値基準は設けず、最終的にはコーダーの裁量に委ねる。
+When the number of intended type combinations is small and a compound prefix remains readable, a compound prefix is allowed.
+When the combinations become broad or the compound prefix becomes harder to read, use `v` instead.
+No strict numeric threshold is imposed. Final choice is left to the coder's judgment.
 
 ### Examples
 
@@ -321,10 +350,26 @@ _asTokenOrList
 vPayload
 ```
 
-## 13. ブレースの書き方
+## 16. Meaning hints in names
 
-条件ブロックでは `{}` の省略を禁止する。
-クラス、関数、メソッド、条件ブロックの開始ブレースは、宣言や条件式と同じ行に置く。
+Include concise meaning hints whenever they improve readability.
+This applies to variable names in general, not only to collections.
+For collections, it is recommended to include lookup keys, ordering, filtering, or selection meaning whenever practical, but this remains a recommendation rather than an absolute rule.
+
+### Examples
+
+```autohotkey
+mUsersByID
+aJobsPending
+mHandlersByMessage
+sPathDirLog
+sUrlFooPageA
+```
+
+## 17. Braces
+
+Do not omit `{}` for conditional blocks.
+For classes, functions, methods, and conditional blocks, the opening brace must be on the same line as the declaration or condition.
 
 ### Bad
 
@@ -363,9 +408,9 @@ DoSomething() {
 }
 ```
 
-## 14. 条件式での比較順序
+## 18. Comparison order in conditions
 
-`==` などで固定値と変数を比較する時は、固定値を左側、変数を右側に置く。
+When comparing a fixed value and a variable with `==` or similar operators, place the fixed value on the left and the variable on the right.
 
 ### Bad
 
@@ -381,10 +426,10 @@ if ( 4 == iValue ) {
 }
 ```
 
-## 15. 命名の組み合わせ方
+## 19. Combined naming pattern
 
-ローカル変数でハンガリアンノーテーションを使う場合は、`_` を最初に置き、その後ろにハンガリアンの接頭辞を続ける。
-global 変数は `g_` を最初に置き、その後ろにハンガリアンの接頭辞を続ける。
+For local variables, place `_` first and then the Hungarian prefix.
+For global variables, place `g_` first and then the Hungarian prefix.
 
 ### Examples
 
@@ -396,14 +441,15 @@ _mUsersByID
 _iPIDWorker
 _sPathConfig
 _iTimeoutMS
-g_sUrlBase
+g_sURLBase
 g_mWorkersByID
 ```
 
-## 16. 現時点で未記載のもの
+## 20. Not yet codified
 
-以下はまだ確定していないため、この版では規約化しない。
+The following topics are intentionally left undecided for now.
 
-- collection 名に、lookup の基準や並び順の意味をどこまで含めるか
+- error handling policy such as `throw` vs return-value-first
+- naming rules for `DllCall` wrappers
 
-今後、合意できたものから順次このドキュメントへ追記する。
+Add them only after a concrete rule is agreed.
