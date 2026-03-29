@@ -43,14 +43,14 @@ Recommended grouping order:
 ### Preferred
 
 ```autohotkey
-#Include <ExternalLib\JXON>
-#Include <ExternalLib\WebView2\WebView2>
+#Include <ExternalLib\\JXON>
+#Include <ExternalLib\\WebView2\\WebView2>
 
-#Include Core\Result.ahk
-#Include Core\Win32Helpers.ahk
+#Include Core\\Result.ahk
+#Include Core\\Win32Helpers.ahk
 
-#Include %A_ScriptDir%\TransportProfileStdIO.ahk
-#Include %A_ScriptDir%\WorkerSession.ahk
+#Include %A_ScriptDir%\\TransportProfileStdIO.ahk
+#Include %A_ScriptDir%\\WorkerSession.ahk
 ```
 
 ## 5. Comment language
@@ -249,7 +249,7 @@ When similar classes or variables appear together in the same directory or conte
 In class names, the common base concept should come first.
 In variable names, after the Hungarian prefix, the common category should come first.
 
-### Bad
+### Avoid
 
 ```autohotkey
 WindowMessageTransportProfile
@@ -264,7 +264,7 @@ sBarUrl := ""
 sBarPageAUrl := ""
 ```
 
-### Good
+### Preferred
 
 ```autohotkey
 TransportProfileWindowMessage
@@ -487,8 +487,9 @@ sUrlFooPageA
 
 Do not omit `{}` for conditional blocks.
 For classes, functions, methods, and conditional blocks, the opening brace must be on the same line as the declaration or condition.
+This repository uses OTD/K&R style for opening braces.
 
-### Bad
+### Avoid
 
 ```autohotkey
 if ( bSomething )
@@ -507,7 +508,7 @@ DoSomething()
 }
 ```
 
-### Good
+### Preferred
 
 ```autohotkey
 if ( bSomething ) {
@@ -528,15 +529,16 @@ DoSomething() {
 ## 21. Comparison order in conditions
 
 When comparing a fixed value and a variable with `==` or similar operators, place the fixed value on the left and the variable on the right.
+This repository adopts Yoda condition style for such comparisons.
 
-### Bad
+### Avoid
 
 ```autohotkey
 if ( iValue == 4 ) {
 }
 ```
 
-### Good
+### Preferred
 
 ```autohotkey
 if ( 4 == iValue ) {
@@ -549,7 +551,7 @@ For methods and functions that return a value, prefer early return and guard cla
 Do not delay the return value unnecessarily by wrapping the main logic inside deep conditional blocks.
 Use early return to keep the main path short and visible.
 
-### Bad
+### Avoid
 
 ```autohotkey
 GetUserLabel(userId) {
@@ -563,7 +565,7 @@ GetUserLabel(userId) {
 }
 ```
 
-### Good
+### Preferred
 
 ```autohotkey
 GetUserLabel(userId) {
@@ -585,7 +587,7 @@ Avoid nested conditional blocks whenever practical.
 Keep `if` block depth to one level whenever possible.
 If the logic would grow into two or more nested levels, extract a helper method or a nested function.
 
-### Bad
+### Avoid
 
 ```autohotkey
 DoSomething(sValue) {
@@ -603,7 +605,7 @@ DoSomething(sValue) {
 }
 ```
 
-### Good
+### Preferred
 
 ```autohotkey
 DoSomething(sValue) {
