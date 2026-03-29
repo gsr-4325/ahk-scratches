@@ -205,18 +205,23 @@ OnMessage(wParam, lParam, msg, hWnd)
 
 ## 13. Function and method semantics
 
-Functions and methods that retrieve and return a value should use `Get` whenever it remains natural and readable.
+Functions and methods whose primary purpose is to obtain and return a value should start with `Get` whenever practical.
+Within that `Get`-based form, choose the remainder of the name so that it reads as naturally as possible.
+Past participles may be used when they help keep a `Get` name natural and clear.
 Functions and methods that change object state should use `Set`.
 Other actions should use a concrete verb rather than a generic `Do` prefix.
 Event handlers and callback entry points may use `On`.
-Natural English naming takes priority over mechanically forcing a `Get` form.
-A name like `GetStringJoined()` is acceptable when it reads naturally, but `Get` is not mandatory if it makes the name awkward.
+
+`Get` is the default rule for value-returning methods, but there are two explicit exceptions.
+The first exception is a thin wrapper around an external API, especially a Win32 or `DllCall` boundary, where preserving the original API verb is more important than forcing `Get`.
+The second exception is an operation-centric method whose main meaning is the operation itself, such as `Read`, `Create`, `Open`, `Parse`, `Build`, `Join`, `Encode`, `Decode`, `Send`, or `Receive`, even when that operation returns a value.
 
 ### Preferred
 
 ```autohotkey
 GetWindowTitle()
 GetWorkerState()
+GetStringJoined(sString)
 SetWindowTitle(sTitle)
 SetRetryLimit(iLimit)
 RunJob()
@@ -350,6 +355,28 @@ _asTokenOrList
 vPayload
 ```
 
+### 15.7 `DllCall` wrapper naming
+
+Thin wrappers around Win32 or other external APIs should preserve the original API name as closely as practical.
+Do not mechanically force `Get` onto a thin wrapper only because it returns a value.
+Higher-level wrappers should be named by their primary meaning.
+If the method is a true accessor or retrieval helper, prefer `Get`.
+If the method is fundamentally an operation such as reading, creating, opening, parsing, building, encoding, decoding, sending, or receiving, keep the operation verb.
+
+### Preferred
+
+```autohotkey
+_CreateNamedPipe()
+_ReadFile()
+_GetWindowThreadProcessID()
+CreateWorkerPipe()
+ReadPipeText()
+ParseConfigText()
+BuildWorkerMap()
+GetWorkerState()
+GetReadBufferSize()
+```
+
 ## 16. Meaning hints in names
 
 Include concise meaning hints whenever they improve readability.
@@ -450,6 +477,5 @@ g_mWorkersByID
 The following topics are intentionally left undecided for now.
 
 - error handling policy such as `throw` vs return-value-first
-- naming rules for `DllCall` wrappers
 
 Add them only after a concrete rule is agreed.
