@@ -204,6 +204,33 @@ for _iIndex, _sItem in aItems {
 }
 ```
 
+## 11.1 Operator spacing
+
+Use spaces around binary operators and between unary operators and the following expression.
+This includes assignment, comparison, arithmetic, and logical operators where the language syntax permits it.
+Write `if ( ! IsObject(obj) )` rather than `if ( !IsObject(obj) )`.
+Write `iValue := iBase * 5` rather than `iValue := iBase*5`.
+
+### Preferred
+
+```autohotkey
+if ( ! UserExists(iUserID) ) {
+    return ""
+}
+
+_iValue := iBase * 5
+```
+
+### Avoid
+
+```autohotkey
+if ( !UserExists(iUserID) ) {
+    return ""
+}
+
+_iValue := iBase*5
+```
+
 ## 12. Nested functions
 
 Nested functions must start with `_`.
