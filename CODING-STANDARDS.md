@@ -538,7 +538,37 @@ DoSomething(sValue) {
 }
 ```
 
-## 21. Combined naming pattern
+## 21. Error handling policy
+
+Use `throw` for contract violations, internal inconsistencies, and Win32 or `DllCall` failures.
+Use return values for expected absence, lookup misses, or other normal non-exceptional cases.
+Do not use ambiguous sentinel values when they can be confused with a valid result.
+When a return-value-based miss is used, choose a result that is natural for the API and document the behavior clearly.
+
+### Preferred
+
+```autohotkey
+GetPipeHandle(sPipeName) {
+    _hPipe := _CreateNamedPipe(sPipeName)
+    if ( !_hPipe ) {
+        throw Error("Failed to create named pipe.")
+    }
+
+    return _hPipe
+}
+```
+
+```autohotkey
+FindWorkerByID(iWorkerID) {
+    if ( !g_mWorkersByID.Has(iWorkerID) ) {
+        return ""
+    }
+
+    return g_mWorkersByID[iWorkerID]
+}
+```
+
+## 22. Combined naming pattern
 
 For local variables, place `_` first and then the Hungarian prefix.
 For global variables, place `g_` first and then the Hungarian prefix.
@@ -557,10 +587,10 @@ g_sURLBase
 g_mWorkersByID
 ```
 
-## 22. Not yet codified
+## 23. Not yet codified
 
 The following topics are intentionally left undecided for now.
 
-- error handling policy such as `throw` vs return-value-first
+- none at the moment
 
-Add them only after a concrete rule is agreed.
+Add new items here only when a topic is intentionally left open.
